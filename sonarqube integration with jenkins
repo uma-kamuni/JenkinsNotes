@@ -1,22 +1,24 @@
-# SONARQUBE #
+^^^^^^^^^^^^^^^^^^^^^^^^^ SONARQUBE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 SONARQUBE PORT: 9000
 
-•	KEY CHAR:
+# KEY CHAR:
 To find bugs,duplication,code smells,sql injection,hardcoded var/secrets
+____________________________________________________________________________________________________________________________________________
+# TUTORIAL
 
-•	TUTORIAL
-*LAUNCH EC2 INSTANCE FOR SONARQUBE
-INSTANCE TYPE -C7i-flex.large    ----> RAM atleast 4GB
+## LAUNCH EC2 INSTANCE FOR SONARQUBE
+INSTANCE TYPE : C7i-flex.large    ----> RAM atleast 4GB
 Security Group: allow port 9000
 Storage: 12GB
 ----> login to sonar-server
 
-•	INCREASE KERNEL LIMIT
+##	INCREASE KERNEL LIMIT
 #sudo sysctl -w vm.max_map_count=262144
 #sudo nano /etc/sysctl.conf
 •	Reload the settings:
 #sudo sysctl -p
 
+We set vm.max_map_count=262144 for SonarQube because its embedded Elasticsearch needs higher memory map limits to start and run properly.
 _________________________________________________________________________________________________________________________________________
 •	NOW INSTALL DOCKER AND DOCKER COMPOSE IN SONAR-SERVER
 #sudo -i
@@ -75,13 +77,13 @@ ________________________________________________________________________________
 
 ____________________________________________________________________________________________________________________________________
 
-NOW ACCESS SONAR UI ON BROWSER:   PUBLIC-IP:9000
+• NOW ACCESS SONAR UI ON BROWSER:   PUBLIC-IP:9000
 
 user_id :admin
 password:admin
 and set your own password
 
-Now Generate a token to integrate with jenkins:
+• Now Generate a token to integrate with jenkins:
 GO SONARQUBE DASHBOARD --> AT TOP RIGHT ---> MY ACCOUNT ---> SECURITY--->
 ****GENERATE TOKEN*****
 NAME: sonar-tok
@@ -89,7 +91,7 @@ TYPE: Global analysis token
 EXPIRY: 30days
 ---> YOU WILL GET TOKEN SAVE THE TOKEN
 ______________________________________________________________________
-## CONFIGURE CREDENTIALS
+• ## CONFIGURE CREDENTIALS
 NOW ADD THIS TOKEN IN JENKINS CREDENTIALS
 GO TO JENKINS UI ---> JENKINS MANAGE ---> CREDENTIALS
 SELECT secret text
@@ -99,14 +101,14 @@ ID : sonar-tok
 
 ____________________________________________________________________
 
-## CONFIGURE TOOLS
+• ## CONFIGURE TOOLS
 sonarqube scanner installation:
 Name:
 Version:    
 --> save
 ______________________________________________________________________
 
-## CONFIGURE SYSTEM CONFIGURATION
+• ## CONFIGURE SYSTEM CONFIGURATION
 sonarqube servers:
 Name: sonar                ---># this name will be used in  SonarqubeEnv( ) in Jenkinsfile
 sonarserver url:  private IP : 9000
@@ -115,7 +117,7 @@ token: sonar-tok
 ----> apply---> SAVE
 __________________________________________________________________________________________________________
 
-###CONFIGURE QUALITY GATE
+• ###CONFIGURE QUALITY GATE
 
 Sonarqube Dashboard--->Guality Gate --> Create--->
 Name: my-qgate-3v
@@ -132,6 +134,7 @@ Bugs= 1
 
 BELOW  IN PROJECT SECTION ---> select our code /project
 --->SET AS DEFAULT QUALITY GATE AT LAST
+if we dont set this as default we need to add Quality Gate stage in Jenkinsfile
 
 
 AND BUILD JENKINS JOB AGAIN
