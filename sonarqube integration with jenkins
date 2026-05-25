@@ -1,0 +1,138 @@
+# SONARQUBE #
+SONARQUBE PORT: 9000
+
+•	KEY CHAR:
+To find bugs,duplication,code smells,sql injection,hardcoded var/secrets
+
+•	TUTORIAL
+*LAUNCH EC2 INSTANCE FOR SONARQUBE
+INSTANCE TYPE -C7i-flex.large    ----> RAM atleast 4GB
+Security Group: allow port 9000
+Storage: 12GB
+----> login to sonar-server
+
+•	INCREASE KERNEL LIMIT
+#sudo sysctl -w vm.max_map_count=262144
+#sudo nano /etc/sysctl.conf
+•	Reload the settings:
+#sudo sysctl -p
+
+_________________________________________________________________________________________________________________________________________
+•	NOW INSTALL DOCKER AND DOCKER COMPOSE IN SONAR-SERVER
+#sudo -i
+# apt update 
+#apt upgrade   if needed
+#apt install docker.io
+#apt install docker-compose-v2     ---> use tab
+
+_______________________________________________________________________________________________________________________________________
+#cat > docker-compose.yaml
+
+version: "3"
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    depends_on:
+      - db
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+      # Limit the Java Heap to 1GB for Compute and 1GB for Web to fit in a 4GB server
+      - SONAR_CE_JAVA_OPTS=-Xmx1g -Xms1g 
+      - SONAR_WEB_JAVA_OPTS=-Xmx1g -Xms1g
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    # This command is often needed for PostgreSQL containers on minimal resources
+    command: postgres -c 'max_connections=200'
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql:
+___________________________________________________________________________________________________________________________________
+
+#docker compose up -d
+#docker compose logs -f sonarqube
+
+____________________________________________________________________________________________________________________________________
+
+NOW ACCESS SONAR UI ON BROWSER:   PUBLIC-IP:9000
+
+user_id :admin
+password:admin
+and set your own password
+
+Now Generate a token to integrate with jenkins:
+GO SONARQUBE DASHBOARD --> AT TOP RIGHT ---> MY ACCOUNT ---> SECURITY--->
+****GENERATE TOKEN*****
+NAME: sonar-tok
+TYPE: Global analysis token
+EXPIRY: 30days
+---> YOU WILL GET TOKEN SAVE THE TOKEN
+______________________________________________________________________
+## CONFIGURE CREDENTIALS
+NOW ADD THIS TOKEN IN JENKINS CREDENTIALS
+GO TO JENKINS UI ---> JENKINS MANAGE ---> CREDENTIALS
+SELECT secret text
+Scope: Global
+ID : sonar-tok
+--> save
+
+____________________________________________________________________
+
+## CONFIGURE TOOLS
+sonarqube scanner installation:
+Name:
+Version:    
+--> save
+______________________________________________________________________
+
+## CONFIGURE SYSTEM CONFIGURATION
+sonarqube servers:
+Name: sonar                ---># this name will be used in  SonarqubeEnv( ) in Jenkinsfile
+sonarserver url:  private IP : 9000
+token: sonar-tok
+
+----> apply---> SAVE
+__________________________________________________________________________________________________________
+
+###CONFIGURE QUALITY GATE
+
+Sonarqube Dashboard--->Guality Gate --> Create--->
+Name: my-qgate-3v
+
+UNLOCK EDITING ---> add condition
+☒ on new code
+☑ on overall code
+
+Quality gate fails when 
+vulnarability = 3
+Bugs= 1
+
+--> save
+
+BELOW  IN PROJECT SECTION ---> select our code /project
+--->SET AS DEFAULT QUALITY GATE AT LAST
+
+
+AND BUILD JENKINS JOB AGAIN
+_______________________________________________________________________________________________________________
