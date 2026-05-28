@@ -1,0 +1,263 @@
+****************************************************************************************************************************************************************
+                                                                   WEBHOOK
+****************************************************************************************************************************************************************
+
+Webhook: Triggers the changes in code when developer does any changes in code and  build the jenkins job automatically on every commit or push.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+PREREQUISITES:
+INSTALL Plugins
+-git
+-github
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+****************************************************************************************************************************************************************
+
+
+GITHUB URL: https://github.com/uma-kamuni/calcwebappmvn.git
+Update jenkins file    ---> note=quality agte stage is commented for quality gate we need to configure sonarqube-webhook in sonar UI.
+---------------------------------------------
+Jenkinsfile:
+----------------------------------------------
+
+pipeline {   
+    agent {
+        label 'ag-1' 
+    }
+	    environment {
+        IMAGE_NAME = "calcwebappmvn:${BUILD_NUMBER}"
+    }
+
+      tools {
+         maven 'my-maven'
+     //    dockerTool 'my-docker'
+      }
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git url: 'https://github.com/uma-kamuni/calcwebappmvn.git'    
+		            echo "Code Checked-out Successfully!!";
+		            sh 'ls -la'
+            }
+        }
+        stage('Package') {
+            steps {
+				sh 'ls -la'
+				sh 'mvn clean'
+                sh 'mvn package'    
+    		    echo "Maven Package Goal Executed Successfully!";
+    		    sh  'ls -la'
+            }
+        }
+        stage('docker') {
+            steps {
+				sh 'which docker'
+				sh 'docker --version'
+				sh 'docker ps'
+                sh 'docker images'
+               // sh 'docker build -t calcwebappmvn:v1 .' 
+                sh 'docker build -t ${IMAGE_NAME} .'
+                echo "Docker Image Built Successfully!!"
+                sh 'docker images'
+                   // junit 'target/surefire-reports/*.xml'
+		           //     echo "Publishing JUnit reports"
+            }
+        }
+
+ 	stage('SonarQube analysis') {
+            steps {
+		// Change this as per your Jenkins Configuration
+                withSonarQubeEnv('sonar') {
+                    sh 'mvn package sonar:sonar'
+                }
+            }
+        }
+
+    // stage('Quality Gate') {
+    //         steps {
+    //             timeout(time: 5, unit: 'MINUTES') {
+    //                 script {
+    //                     try {
+    //                         def qg = waitForQualityGate()
+    //                         echo "Quality Gate Status: ${qg.status}"
+    //                         if (qg.status != 'OK') {
+    //                             error "Quality Gate failed: ${qg.status}"
+    //                         }
+    //                     } catch (Exception e) {
+    //                         echo "Quality Gate check failed: ${e.message}"
+    //                         error "Quality Gate stage failed"
+    //                     }
+    //                 }
+    //             }
+    //         }
+    // }
+
+    }
+    
+    post {
+        success {
+            echo 'pipeline is successful'
+        }
+        failure {
+            echo 'pipeline is FAILED'
+        }
+    }
+
+}
+________________________________________________________________________________________________________________________________________________________________
+
+CREATE A NEW JENKINS PIPELINE JOB:
+NAME: test-webhook
+Pipeline:Ok
+SELECT BUILD TRIGGERS:  ☑ GitHub hook trigger for GITScm polling         ---# imp
+
+PIPELINE---> SELECT pipeline script from SCM-->
+SCM - git
+Repositories  - https://github.com/uma-kamuni/calcwebappmvn.git
+BRANCH  -   */master
+Script Path  Jenkinsfile
+--> APPLY-->SAVE
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Now build jenkins pipeline job mannually , DRY RUN to enable WEBHOOK
+________________________________________________________________________________________________________________________________________________________________
+
+                                                      NOW CONFIGURE WEBHOOK IN GITHUB
+________________________________________________________________________________________________________________________________________________________________
+
+Go to GITHUB---> GO to our code/project repository--->settings---> WEBHOOKS-->Add Webhooks--->Authenticate gituhub--->
+
+Payload URL * :    http://jenkins-server-pub-ip:8080/github-webhook/
+SSL verification : Disable
+Which events would you like to trigger this webhook?   : ☑ Send me everything.
+
+☑ Active
+We will deliver event details when this hook is triggered.
+
+-->> ADD WEBHOOK
+
+RELOAD RECENT DELIVERIES
+________________________________________________________________________________________________________________________________________________________________
+Now do some changes in code and commit the code , it should trigger the changes and build pipeline automatically.
+________________________________________________________________________________________________________________________________________________________________
+****************************************************************************************************************************************************************
+                                                        SONARQUBE WEBHOOK FOR QUALITY GATE
+****************************************************************************************************************************************************************
+
+Set QUALITY GATE condition (only perform next stages after quality gate passes)
+
+QUALITY GATE condition 
+only pass quality gate if:
+bugs-3
+vulnarabilities-5
+
+Fail if :
+bugs-1
+vulnarabilities-3
+
+****************************************************************************************************************************************************************
+GitHub webhook is configured 
+Now for configure for SonarQube Quality Gate.
+
+For SonarQube Quality Gate, the webhook must be:
+http://44.200.37.129:8080/sonarqube-webhook/
+
+my account---> Administation--->projects ---> managements---> goto our calculator project--->on right top --> Project Settings--->WEBHOOKS--->Create Webhook
+NAME: my-qg-test
+URL: http://44.200.37.129:8080/sonarqube-webhook/
+---> CREATE
+IF WE DONT CONFIGURE WEBHOOK ,SONARQUBE QUALITY GATE WILL FAIL.
+
+
+NOW BUILD PIPELINE JOB AGAIN, IT SHOULD PASS OR FAIL ACCORDING TO QG CONDITION.
+
+****************************************************************************************************************************************************************
+JENKINS FILE FOR QUALITY GATE WEBHOOK  , UPDATE THIS JENKINSFILE BEFORE RUNNING THE PIPELINE JOB.
+
+Jenkinsfile:
+
+pipeline {   
+    agent {
+        label 'ag-1' 
+    }
+	    environment {
+        IMAGE_NAME = "calcwebappmvn:${BUILD_NUMBER}"
+    }
+
+      tools {
+         maven 'my-maven'
+     //    dockerTool 'my-docker'
+      }
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git url: 'https://github.com/uma-kamuni/calcwebappmvn.git'    
+		            echo "Code Checked-out Successfully!!";
+		            sh 'ls -la'
+            }
+        }
+        stage('Package') {
+            steps {
+				sh 'ls -la'
+				sh 'mvn clean'
+                sh 'mvn package'    
+    		    echo "Maven Package Goal Executed Successfully!";
+    		    sh  'ls -la'
+            }
+        }
+        stage('docker') {
+            steps {
+				sh 'which docker'
+				sh 'docker --version'
+				sh 'docker ps'
+                sh 'docker images'
+               // sh 'docker build -t calcwebappmvn:v1 .' 
+                sh 'docker build -t ${IMAGE_NAME} .'
+                echo "yeahh Docker Image Built Successfully!!"
+                sh 'docker images'
+                   // junit 'target/surefire-reports/*.xml'
+		           //     echo "Publishing JUnit reports"
+            }
+        }
+
+ 	stage('SonarQube analysis') {
+            steps {
+		// Change this as per your Jenkins Configuration
+                withSonarQubeEnv('sonar') {
+                    sh 'mvn package sonar:sonar'
+                }
+            }
+        }
+
+    stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    script {
+                        try {
+                            def qg = waitForQualityGate()
+                            echo "Quality Gate Status: ${qg.status}"
+                            if (qg.status != 'OK') {
+                                error "Quality Gate failed: ${qg.status}"
+                            }
+                        } catch (Exception e) {
+                            echo "Quality Gate check failed: ${e.message}"
+                            error "Quality Gate stage failed"
+                        }
+                    }
+                }
+            }
+    }
+
+    }
+    
+    post {
+        success {
+            echo 'pipeline is successful'
+        }
+        failure {
+            echo 'pipeline is FAILED'
+        }
+    }
+
+}
+
+****************************************************************************************************************************************************************
