@@ -1,0 +1,158 @@
+********************************************************************************************************************************************************************************************
+                                                                 JENKINS MASTER-AGENT SETUP
+********************************************************************************************************************************************************************************************
+4️⃣ INSTALLING JENKINS SERVER
+Prerequisites
+Before installing Jenkins:
+•	✅ Java Development Kit (JDK) 11 or 17
+•	✅ Minimum 256 MB RAM (1GB+ recommended)
+•	✅ 10 GB disk space
+•	✅ Administrator/sudo access
+click here for Installation 
+
+_______________________________________________________________________________________________________________________________________________________________________________________________
+LAUNCH 2 EC2 INSTANCES
+_______________________________________________________________________________________________________________________________________________________________________________________________
+1) JENKINS-SERVER:
+INSTANCE TYPE = C7i-flex.large
+SG PORT : 8080
+----------------------------------------------------------------------------------------------------------------------------------------------------
+2) AGENT:
+INSTANCE TYPE = C7i-flex.large
+
+#USERDATA: 
+
+#!/bin/bash
+
+sudo apt update -y
+sudo apt upgrade -y
+
+# Install Java
+sudo apt install openjdk-21-jdk -y
+
+# Create Jenkins user
+sudo useradd -m -s /bin/bash jenkins
+
+# Create SSH directory
+sudo mkdir -p /home/jenkins/.ssh
+sudo chown -R jenkins:jenkins /home/jenkins/.ssh
+sudo chmod 700 /home/jenkins/.ssh
+
+# Create Jenkins agent workspace
+sudo mkdir -p /home/jenkins/jenkins-agent
+sudo chown -R jenkins:jenkins /home/jenkins/jenkins-agent
+
+# Install Docker
+sudo apt install docker.io -y
+
+# Start and enable Docker
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Add Jenkins user to Docker group
+sudo usermod -aG docker jenkins
+
+# Install AWS CLI
+sudo snap install aws-cli --classic
+_______________________________________________________________________________________________________________________________________________________________________________________________
+
+********************************************************************************************************************************************************************************************
+                                                LOGIN TO JENKINS-SERVER
+********************************************************************************************************************************************************************************************
+ sudo apt update
+ sudo apt upgrade -y
+ java --version
+ sudo apt install openjdk-21-jre-headless
+ java --version
+ sudo su - jenkins
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc   https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]"   https://pkg.jenkins.io/debian-stable binary/ | sudo tee   /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins
+sudo su - jenkins
+cd .ssh
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+cat ~/.ssh/id_rsa.pub
+
+    ((### copy to agent using command  vim /home/jenkins/.ssh/))
+_______________________________________________________________________________________________________________________________________________________________________________________________
+
+
+
+
+********************************************************************************************************************************************************************************************
+                                                LOGIN TO JENKINS- AGENT
+********************************************************************************************************************************************************************************************
+sudo useradd -m -s /bin/bash jenkins
+sudo passwd jenkins
+sudo mkdir -p /home/jenkins/.ssh
+sudo chown jenkins:jenkins /home/jenkins/.ssh
+sudo chmod 700 /home/jenkins/.ssh
+sudo mkdir -p /home/jenkins/jenkins-agent
+sudo chown jenkins:jenkins /home/jenkins/jenkins-agent
+sudo apt install openjdk-11-jdk -y
+sudo apt update
+sudo apt upgrade -y
+
+sudo su - jenkins
+vim /home/jenkins/.ssh/authorized_keys
+cd /home/jenkins/.ssh/
+ls
+touch authorized_keys
+cat >> authorized_keys       ----> PASTE id_rsa.pub FROM JENKINS-SERVER
+cd
+chmod 600 ~/.ssh/authorized_keys
+
+
+NOW TRY SWITCHING TO AGENT FROM JENKINS-SERVER
+_______________________________________________________________________________________________________________________________________________________________________________________________
+_______________________________________________________________________________________________________________________________________________________________________________________________
+
+********************************************************************************************************************************************************************************************
+                                    ACCESS JENKINS UI ON BROWSER:     PUB_IP-JENKINS-SERVER:8080
+********************************************************************************************************************************************************************************************
+
+ADD NODES
+JENKINS DASHBOARD---> MANAGE JENKINS--> NODES---> NEW NODE--> TYPE-PERMANENT NODE--->
+NAME: agent-1
+Description: Ubuntu Agent Machine for Build Jobs
+Number of executors : 2
+Remote root directory : /home/jenkins/jenkins-agent
+LABELS: ag-1 ag-2 docker
+Usage : Only build jobs with label expressions matching this node
+Launch method: 
+
+Launch agents via SSH
+Host: AGENTS PRIVATE IP ADDRESS
+
+Credentials --> ADD --> GLOBAL
+KIND: SSH USERNAME WITH PRIVATE KEY
+ID : ag-1
+username: jenkins
+PRIVATE KEY enter--> ADD
+[JENKINS MASTER PRIVATE KEY--> GO TO JENKINS SERVER--> cat .ssh/id_rsa]
+---> SAVE
+
+Host Key Verification Strategy: Non verifying Verification Strategy
+
+_______________________________________________________________________________________________________________________________________________________________________________________________
+ADD NODE --> CHECK IF NODE ADDED OR RELAUNCH 
+
+AFTER craeting node it creates remoting .jar files in agent-server (jenkins user)
+_______________________________________________________________________________________________________________________________________________________________________________________________
+
+# NOW CREATE JENKINS PIPLEINE  ---> Write jenkinsfile
+GO to Jenkins dashboard --> New Item --> Name:  --> Select PIPELINE JOB--->OK
+CONFIGURE:
+PIPELINE---> SELECT pipeline script from SCM-->
+
+SCM - git
+Repositories  - https://github.com/uma-kamuni/calcwebappmvn.git
+BRANCH  -   */master
+Script Path  Jenkinsfile
+
+APPLY--> SAVE
+
+_______________________________________________________________________________________________________________________________________________________________________________________________
+********************************************************************************************************************************************************************************************
+
