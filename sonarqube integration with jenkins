@@ -115,33 +115,13 @@ sonarserver url:  private IP : 9000
 token: sonar-tok
 
 ----> apply---> SAVE
-__________________________________________________________________________________________________________
+___________________________________________________________________________________________________________________________________________
+____________________________________________________________________________________________________________________________________________
+*******************************************************************************************************************************************
+https://github.com/uma-kamuni/calcwebappmvn.git
 
-• ###CONFIGURE QUALITY GATE
-
-Sonarqube Dashboard--->Guality Gate --> Create--->
-Name: my-qgate-3v
-
-UNLOCK EDITING ---> add condition
-☒ on new code
-☑ on overall code
-
-Quality gate fails when 
-vulnarability = 3
-Bugs= 1
-
---> save
-
-BELOW  IN PROJECT SECTION ---> select our code /project
---->SET AS DEFAULT QUALITY GATE AT LAST
-if we dont set this as default we need to add Quality Gate stage in Jenkinsfile
-
-
-AND BUILD JENKINS JOB AGAIN
-_______________________________________________________________________________________________________________
-
-
-
+update jenkinsfile with below content:
+_____________________________________
 
 JENKINSFILE FOR sonarqube
 
@@ -210,5 +190,49 @@ pipeline {
         }
     }
 }
+______________________________________________________
+*****************************************************************************************************************************************
+                                     STEPS TO CREATE JENKINS JOB FOR SONARQUBE INTEGRATION
+*****************************************************************************************************************************************
+GO to Jenkins dashboard --> New Item --> Name:  --> Select PIPELINE JOB--->OK
+CONFIGURE:
+PIPELINE---> SELECT pipeline script from SCM-->
 
+SCM - git
+Repositories  - https://github.com/uma-kamuni/calcwebappmvn.git
+BRANCH  -   */master
+Script Path  Jenkinsfile
+
+APPLY--> SAVE
+----------------------------------------------
+Build Jenkinsjob again
+Check on sonar server :  public ip:9090  , we will see our project ,it will show bugs ,vul,etc
+************************************************************************************************************************************************
+________________________________________________________________________________________________________________________________________________-
+________________________________________________________________________________________________________________________________________________
+
+• ###CONFIGURE QUALITY GATE
+
+Sonarqube Dashboard--->Guality Gate --> Create--->
+Name: my-qgate-3v
+
+UNLOCK EDITING ---> add condition
+☒ on new code
+☑ on overall code
+
+Quality gate fails when 
+vulnarability = 3
+Bugs= 1
+
+--> save
+
+BELOW  IN PROJECT SECTION ---> select our code /project
+--->SET AS DEFAULT QUALITY GATE AT LAST
+if we dont set this as default we need to add Quality Gate stage in Jenkinsfile
+
+------------------------------
+AND BUILD JENKINS JOB AGAIN
+-----------------------------
+__________________________________________________________________________________________________________________________________________________
+***************************************************************************************************************************************************
 
