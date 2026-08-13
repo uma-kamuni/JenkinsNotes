@@ -132,8 +132,14 @@ ________________________________________________________________________________
 ____________________________________________________________________________________
 
 Sonarqube UI:
-Go to Administraton--> Create Webhook
+1. Go to Administraton--> Create Webhook__>
+name: jenkins
+URL: jenkins public_IP:8080/sonarqube-webhook/
+--> SAVE
 
+2. Install Plugins
+  -Sonar quality gate
+  -Quality Gates
 
 NOW ADD SONARQUBE STAGE IN JENKINSFILE
 
@@ -202,7 +208,9 @@ pipeline {
     }
 }
 
-
+#############################
+Pipeline wait for 5mins for report from sonarqube.
+If pass go to next stage ,it wont perform next stage.
 ---------------------------------------------------------------------------------------------------------
 
 
