@@ -90,3 +90,119 @@ versioning: enable
 
 7. build jenkins job
 --> it will store artifact in s3
+_________________________________________________________________________________________________________________________
+                                       JENKINS INETGRATION WITH SONARQUBE
+_________________________________________________________________________________________________________________________
+1.Launch Ec2 instanec
+instance type: c7i-flex.large
+storage: 12GB
+security Group: port 9000
+
+Access sonarqube UI :    public ip :9000
+login : 
+user: admin
+password: admin
+
+
+SONARQUBE UI:
+Go to Profile---> myaccount--> security--> Generate Token-->
+name: sonar-token
+type: global analysis token
+--> Generate Token --> copt and SAVE
+
+JENKINS UI:
+Go to Manage Jenkins --> Credentials --> Global --> secret Text-->
+name: sonar-token
+id: sonar-token
+--> SAVE
+
+JENKINS UI:
+1.Install Plugin : Sonar Sacnner
+Configure Tools: 
+2.Go to --> manage jenkins --> Tools---> search for sonarqube 
+name : sonar  --> default --> save
+3. Configure system:
+Go to manage jenkins --> System--> Search for sonarqube Environment Variables:
+name: sonar
+URL : sonarqube public_ip:9000
+Token: sonar-token -----> that we have created earlier in credentials
+
+____________________________________________________________________________________
+                                        Quality Gate 
+____________________________________________________________________________________
+
+Sonarqube UI:
+Go to Administraton--> Create Webhook
+
+
+NOW ADD SONARQUBE STAGE IN JENKINSFILE
+
+Jenkinsfile:
+
+pipeline {
+    agent {
+        label "worker"
+    }
+
+    environment {
+        my_aws_credentials = credentials('aws-access')
+    }
+
+    tools {
+        maven "maven"
+    }
+
+    stages {
+        stage('checkout') {
+            steps {
+                git 'https://github.com/mayurpandit25/student-management.git'
+                sh '''
+                echo "clonning is successful"
+                '''
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                mvn clean package
+                echo "build is successful"
+                '''
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
+                }
+            }
+        }
+
+        stage('Artifact to S3') {
+            steps {
+                sh '''
+                aws s3 cp target/*.war s3://mayurcbz.space/Artifact/student.war
+                '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('SonarQube Quality Gates') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+    }
+}
+
+
+---------------------------------------------------------------------------------------------------------
+
+
