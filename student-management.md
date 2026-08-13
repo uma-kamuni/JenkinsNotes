@@ -4,6 +4,7 @@ job name: application-pipeline
 
 vim jenkinsfile
 '''
+
 pipeline {
     agent {
         label "worker"
