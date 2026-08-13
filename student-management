@@ -93,10 +93,78 @@ versioning: enable
 _________________________________________________________________________________________________________________________
                                        JENKINS INETGRATION WITH SONARQUBE
 _________________________________________________________________________________________________________________________
-1.Launch Ec2 instanec
-instance type: c7i-flex.large
-storage: 12GB
-security Group: port 9000
+1 ## LAUNCH EC2 INSTANCE FOR SONARQUBE
+INSTANCE TYPE : C7i-flex.large    ----> RAM atleast 4GB
+Security Group: allow port 9000
+Storage: 12GB
+----> login to sonar-server
+
+2.memory setup 
+sudo sysctl -w vm.max_map_count=262144 
+sudo vim /etc/sysctl.conf 
+add these line ----> vm.max_map_count=262144 
+sudo sysctl -p 
+
+We set vm.max_map_count=262144 for SonarQube because its embedded Elasticsearch needs higher memory map limits to start and run properly.
+_________________________________________________________________________________________________________________________________________
+•	NOW INSTALL DOCKER AND DOCKER COMPOSE IN SONAR-SERVER
+#sudo -i
+# apt update 
+#apt upgrade   if needed
+#apt install docker.io
+#apt install docker-compose-v2     ---> use tab
+#sudo systemctl start docker 
+#sudo usermod -aG docker $USER
+
+_______________________________________________________________________________________________________________________________________
+#cat > docker-compose.yaml
+
+version: "3"
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    depends_on:
+      - db
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+      # Limit the Java Heap to 1GB for Compute and 1GB for Web to fit in a 4GB server
+      - SONAR_CE_JAVA_OPTS=-Xmx1g -Xms1g 
+      - SONAR_WEB_JAVA_OPTS=-Xmx1g -Xms1g
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    # This command is often needed for PostgreSQL containers on minimal resources
+    command: postgres -c 'max_connections=200'
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  postgresql:
+___________________________________________________________________________________________________________________________________
+
+#docker compose up -d
+#docker compose logs -f sonarqube
+
+------------------------------------------------------------------------------------------------------------------------------------
 
 Access sonarqube UI :    public ip :9000
 login : 
