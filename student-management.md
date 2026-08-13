@@ -3,6 +3,8 @@
 job name: application-pipeline
 
 vim jenkinsfile
+
+'''
 pipeline {
     agent {
         label "worker"
@@ -61,6 +63,8 @@ pipeline {
         }
     }
 }
+
+'''
 #Before building thsi job 
 1.Install Maven plugin
 2.Configure Tools in jenkins maanage --> Tools Section
