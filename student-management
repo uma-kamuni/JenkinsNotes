@@ -1,5 +1,11 @@
+________________________________________________________________________________________________________________________________
+                                        JENKINS CI/CD -STUDENT MANAGEMENT APP
+________________________________________________________________________________________________________________________________
 1.Setup Jenkins Master-Agent
-2.Create jenkins job
+
+ACESS JENKINS UI:  Public_IP:8080
+
+2.Create jenkins Pipeline job
 job name: application-pipeline
 
 vim jenkinsfile
@@ -195,9 +201,9 @@ name: sonar
 URL : sonarqube public_ip:9000
 Token: sonar-token -----> that we have created earlier in credentials
 
-____________________________________________________________________________________
+________________________________________________________________________________________________________________________________
                                         Quality Gate 
-____________________________________________________________________________________
+________________________________________________________________________________________________________________________________
 
 Sonarqube UI:
 1. Go to Administraton--> Create Webhook__>
@@ -208,6 +214,18 @@ URL: jenkins public_IP:8080/sonarqube-webhook/
 2. Install Plugins
   -Sonar quality gate
   -Quality Gates
+
+
+SONARQUBE UI:
+1. Create Quality Gate:
+Unlock editiong --> Add Condition--> Select (On overall code)-->
+Quality Gate fails when:
+Bugs=2
+--> SAVE
+
+Now set Quality Gate as DEFAULT CONDITION:
+To change --> Below--> Go to Projects--> All--> Select our project-->student-management-->go above and SET AS DEFAULT.
+
 
 NOW ADD SONARQUBE STAGE IN JENKINSFILE
 
