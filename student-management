@@ -3,8 +3,6 @@
 job name: application-pipeline
 
 vim jenkinsfile
-
-'''
 pipeline {
     agent {
         label "worker"
@@ -63,12 +61,11 @@ pipeline {
         }
     }
 }
-
-'''
 #Before building thsi job 
 1.Install Maven plugin
 2.Configure Tools in jenkins maanage --> Tools Section
 3.Install aws cli in worker node 
+
 '''
 sudo snap install aws-cli --classic
 '''
